@@ -11,26 +11,65 @@
 
 @implementation HWDCacheHTTPSessionManager
 
++ (HWDCacheHTTPSessionManager *)sharedManager {
+    static HWDCacheHTTPSessionManager *manager = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        manager=[HWDCacheHTTPSessionManager manager];
+        manager.requestSerializer=[AFJSONRequestSerializer serializer];
+        manager.requestSerializer.timeoutInterval=30;
+        manager.responseSerializer=[AFJSONResponseSerializer serializer];
+        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObject:@"application/json"];
+    });
+    return manager;
+}
+
+
 - (NSURLSessionDataTask *)POST:(NSString *)URLString
                     parameters:(id)parameters
                       cacheData:(void (^)(NSData * _Nonnull))cacheData
                       progress:(void (^)(NSProgress * _Nonnull))uploadProgress
                        success:(void (^)(NSURLSessionDataTask * _Nonnull, id _Nullable))success
                        failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure {
-    SDImageCache *cacheManage = [SDImageCache sharedImageCache];
-    NSData *myCacheData = [cacheManage diskImageDataBySearchingAllPathsForKey:URLString];
+    NSData *myCacheData = [self loadCacheDataWithKey:URLString];
     cacheData(myCacheData);
     
     NSURLSessionDataTask *dataTask = [self POST:URLString parameters:parameters progress:uploadProgress success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         if (responseObject) {
-            SDImageCache *dataCache = [SDImageCache sharedImageCache];
-            [dataCache storeImageDataToDisk:responseObject forKey:URLString];
+            [self saveCacheDataWithKey:URLString saveData:responseObject];
         }
         success(task, responseObject);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         failure(task, error);
     }];
     return dataTask;
+}
+
+
+#pragma mark - CacheData Deal
+
+- (NSData *)loadCacheDataWithKey :(NSString *)key {
+    if (key) {
+        SDImageCache *cacheManage = [SDImageCache sharedImageCache];
+        NSData *myCacheData = [cacheManage diskImageDataBySearchingAllPathsForKey:key];
+        return myCacheData;
+    }else{
+        return nil;
+    }
+}
+
+- (void)saveCacheDataWithKey :(NSString *)key saveData:(id _Nullable)saveData {
+    if (saveData) {
+        SDImageCache *dataCache = [SDImageCache sharedImageCache];
+        [dataCache storeImageDataToDisk:saveData forKey:key];
+    }
+}
+
+- (void)removeCacheDataForKey :(NSString *)key {
+    if (key) {
+        SDImageCache *dataCache = [SDImageCache sharedImageCache];
+        [dataCache removeImageForKey:key];
+    }
 }
 
 @end

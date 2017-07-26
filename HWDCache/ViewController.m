@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #import "FCHCacheURLProtocol.h"
 #import "SDImageCache.h"
+#import "HWDCacheHTTPSessionManager.h"
 
 @interface ViewController ()<UIWebViewDelegate>
 
