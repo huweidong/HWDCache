@@ -27,11 +27,11 @@
 
 - (NSURLSessionDataTask *)POST:(NSString *)URLString
                     parameters:(id)parameters
-                      cacheData:(void (^)(NSData * _Nonnull))cacheData
+                      cacheData:(void (^)(id _Nonnull))cacheData
                       progress:(void (^)(NSProgress * _Nonnull))uploadProgress
                        success:(void (^)(NSURLSessionDataTask * _Nonnull, id _Nullable))success
                        failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure {
-    NSData *myCacheData = [self loadCacheDataWithKey:URLString];
+    id myCacheData = [self loadCacheDataWithKey:URLString];
     cacheData(myCacheData);
     
     NSURLSessionDataTask *dataTask = [self POST:URLString parameters:parameters progress:uploadProgress success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
@@ -47,11 +47,11 @@
 
 - (nullable NSURLSessionDataTask *)GET:(NSString *)URLString
                             parameters:(nullable id)parameters
-                             cacheData:(void (^)(NSData * _Nonnull))cacheData
+                             cacheData:(void (^)(id _Nonnull))cacheData
                               progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgress
                                success:(nullable void (^)(NSURLSessionDataTask *task, id _Nullable responseObject))success
                                failure:(nullable void (^)(NSURLSessionDataTask * _Nullable task, NSError *error))failure {
-    NSData *myCacheData = [self loadCacheDataWithKey:URLString];
+    id myCacheData = [self loadCacheDataWithKey:URLString];
     cacheData(myCacheData);
     
     NSURLSessionDataTask *dataTask = [self GET:URLString parameters:parameters progress:downloadProgress success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
@@ -68,11 +68,16 @@
 
 #pragma mark - CacheData Deal
 
-- (NSData *)loadCacheDataWithKey :(NSString *)key {
+- (id)loadCacheDataWithKey :(NSString *)key {
     if (key) {
         SDImageCache *cacheManage = [SDImageCache sharedImageCache];
         NSData *myCacheData = [cacheManage imageFromDiskCacheForKey:key];
-        return myCacheData;
+        if (myCacheData) {
+            id dict = [NSJSONSerialization JSONObjectWithData:myCacheData options:(NSJSONReadingMutableLeaves) error:nil];
+            return dict;
+        }else{
+            return nil;
+        }
     }else{
         return nil;
     }
@@ -80,8 +85,9 @@
 
 - (void)saveCacheDataWithKey :(NSString *)key saveData:(id _Nullable)saveData {
     if (saveData) {
+        NSData *data = [NSJSONSerialization dataWithJSONObject:saveData options:NSJSONWritingPrettyPrinted error:nil];
         SDImageCache *dataCache = [SDImageCache sharedImageCache];
-        [dataCache storeImageDataToDisk:saveData forKey:key];
+        [dataCache storeImageDataToDisk:data forKey:key];
     }
 }
 
