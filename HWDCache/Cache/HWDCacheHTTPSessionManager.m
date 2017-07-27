@@ -17,7 +17,7 @@
     dispatch_once(&onceToken, ^{
         manager=[HWDCacheHTTPSessionManager manager];
         manager.requestSerializer=[AFJSONRequestSerializer serializer];
-        manager.requestSerializer.timeoutInterval=30;
+        manager.requestSerializer.timeoutInterval=10;
         manager.responseSerializer=[AFJSONResponseSerializer serializer];
         manager.responseSerializer.acceptableContentTypes = [NSSet setWithObject:@"application/json"];
     });
@@ -45,13 +45,33 @@
     return dataTask;
 }
 
+- (nullable NSURLSessionDataTask *)GET:(NSString *)URLString
+                            parameters:(nullable id)parameters
+                             cacheData:(void (^)(NSData * _Nonnull))cacheData
+                              progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgress
+                               success:(nullable void (^)(NSURLSessionDataTask *task, id _Nullable responseObject))success
+                               failure:(nullable void (^)(NSURLSessionDataTask * _Nullable task, NSError *error))failure {
+    NSData *myCacheData = [self loadCacheDataWithKey:URLString];
+    cacheData(myCacheData);
+    
+    NSURLSessionDataTask *dataTask = [self GET:URLString parameters:parameters progress:downloadProgress success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        if (responseObject) {
+            [self saveCacheDataWithKey:URLString saveData:responseObject];
+        }
+        success(task, responseObject);
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        failure(task, error);
+    }];
+    return dataTask;
+}
+
 
 #pragma mark - CacheData Deal
 
 - (NSData *)loadCacheDataWithKey :(NSString *)key {
     if (key) {
         SDImageCache *cacheManage = [SDImageCache sharedImageCache];
-        NSData *myCacheData = [cacheManage diskImageDataBySearchingAllPathsForKey:key];
+        NSData *myCacheData = [cacheManage imageFromDiskCacheForKey:key];
         return myCacheData;
     }else{
         return nil;
