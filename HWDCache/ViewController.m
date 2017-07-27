@@ -38,12 +38,8 @@
     NSDictionary *para=nil;
     
     
-    [[HWDCacheHTTPSessionManager sharedManager] GET:url parameters:para cacheData:^(NSData * _Nonnull cacheData) {
-        
-        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:cacheData options:(NSJSONReadingMutableLeaves) error:nil];
-        
-        NSLog(@"%@",dict);
-        
+    [[HWDCacheHTTPSessionManager sharedManager] GET:url parameters:para cacheData:^(id _Nonnull cacheData) {
+        NSLog(@"%@",cacheData);
     } progress:nil success:^(NSURLSessionDataTask * _Nullable task, id  _Nullable responseObject) {
         NSLog(@"3333333");
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nullable error) {

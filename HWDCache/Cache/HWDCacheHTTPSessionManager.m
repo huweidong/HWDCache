@@ -31,11 +31,14 @@
                       progress:(void (^)(NSProgress * _Nonnull))uploadProgress
                        success:(void (^)(NSURLSessionDataTask * _Nonnull, id _Nullable))success
                        failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure {
+    //获取缓存数据
     id myCacheData = [self loadCacheDataWithKey:URLString];
     cacheData(myCacheData);
     
+    //请求网络
     NSURLSessionDataTask *dataTask = [self POST:URLString parameters:parameters progress:uploadProgress success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         if (responseObject) {
+            //有网络数据则把网络数据写入磁盘
             [self saveCacheDataWithKey:URLString saveData:responseObject];
         }
         success(task, responseObject);
@@ -51,11 +54,14 @@
                               progress:(nullable void (^)(NSProgress *downloadProgress))downloadProgress
                                success:(nullable void (^)(NSURLSessionDataTask *task, id _Nullable responseObject))success
                                failure:(nullable void (^)(NSURLSessionDataTask * _Nullable task, NSError *error))failure {
+    //获取缓存数据
     id myCacheData = [self loadCacheDataWithKey:URLString];
     cacheData(myCacheData);
     
+    //请求网络
     NSURLSessionDataTask *dataTask = [self GET:URLString parameters:parameters progress:downloadProgress success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         if (responseObject) {
+            //有网络数据则把网络数据写入磁盘
             [self saveCacheDataWithKey:URLString saveData:responseObject];
         }
         success(task, responseObject);
